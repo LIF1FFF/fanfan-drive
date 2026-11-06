@@ -327,17 +327,12 @@ export async function onRequest({ request, env }) {
     if (method === 'OPTIONS') return new Response(null, { status: 204 });
 
     if (p === '/api/config' && method === 'GET') {
+      if (!cfg.configured) console.error('[网盘配置] 缺少环境变量：' + cfg.missing.join(', '));
       return json({
         mode: 'qiniu',
         configured: cfg.configured,
-        missing: cfg.missing,
         authRequired: cfg.configured,
         authenticated: checkSession(cfg, parseCookies(request.headers.get('cookie'))[COOKIE]),
-        bucket: cfg.bucket,
-        region: cfg.region,
-        domain: cfg.domain,
-        privateSpace: cfg.privateSpace,
-        uploadHost: cfg.uploadHost,
         maxUploadMB: cfg.maxMB,
         quotaBytes: QUOTA_BYTES,
       });
@@ -345,7 +340,7 @@ export async function onRequest({ request, env }) {
 
     if (p === '/api/login' && method === 'POST') {
       const { password } = await request.json();
-      if (!cfg.configured) return json({ error: '服务端尚未配置完成：' + cfg.missing.join(', ') }, 503);
+      if (!cfg.configured) return json({ error: '服务暂未就绪，请联系管理员' }, 503);
       if (!safeEqual(String(password || ''), cfg.password)) return json({ error: '密码不对，再试一次' }, 401);
       return json({ ok: true }, 200, {
         'Set-Cookie': `${COOKIE}=${issueSession(cfg)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`,
@@ -357,7 +352,7 @@ export async function onRequest({ request, env }) {
     }
 
     if (!cfg.configured) {
-      return json({ error: '请先在 EdgeOne Pages 控制台配置环境变量：' + cfg.missing.join(', ') }, 503);
+      return json({ error: '服务暂未就绪，请联系管理员' }, 503);
     }
     if (!checkSession(cfg, parseCookies(request.headers.get('cookie'))[COOKIE])) {
       return json({ error: '请先登录', needLogin: true }, 401);

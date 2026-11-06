@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>我的网盘</title>
+<title>反反的网盘</title>
 <style>
 :root {
   --bg: #0d1117;
@@ -149,16 +149,6 @@ button { cursor: pointer; }
 .quota-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .5s ease; }
 .quota-tip { margin: 0; font-size: 11px; color: var(--muted); }
 .side-foot { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.ghost-btn {
-  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
-  border: 0; border-radius: 8px; background: transparent; color: var(--text-2); font-size: 12px;
-}
-.ghost-btn:hover { background: var(--hover); color: var(--text); }
-.mode-badge {
-  padding: 4px 9px; border-radius: 99px; font-size: 11px;
-  background: var(--accent-soft); color: var(--accent);
-}
-.mode-badge.demo { background: rgba(255, 176, 60, .13); color: #e9a33c; }
 .copyright { font-size: 11px; color: var(--muted); }
 
 .main { display: flex; flex-direction: column; min-width: 0; }
@@ -343,7 +333,6 @@ button { cursor: pointer; }
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M14 8l4 4-4 4m4-4H9"/></symbol>
-  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2 6"/><path d="M20 4v7h-7"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"/></symbol>
@@ -357,8 +346,8 @@ button { cursor: pointer; }
 <div id="login" class="login-layer hidden">
   <div class="login-card">
     <div class="login-logo"><svg class="icon"><use href="#i-cloud"/></svg></div>
-    <h1>我的网盘</h1>
-    <p class="muted">输入访问密码，进入你的私人空间</p>
+    <h1>反反的网盘</h1>
+    <p class="muted">请输入访问密码以继续</p>
     <form id="login-form">
       <input id="login-password" type="password" placeholder="访问密码" autocomplete="current-password" required>
       <button class="btn primary block" type="submit">进入网盘</button>
@@ -372,7 +361,7 @@ button { cursor: pointer; }
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-icon"><svg class="icon"><use href="#i-cloud"/></svg></div>
-      <div><strong>我的网盘</strong><span id="brand-sub">七牛云 · 10GB</span></div>
+      <div><strong>反反的网盘</strong><span id="brand-sub">私人云空间</span></div>
     </div>
 
     <nav class="nav" id="nav">
@@ -387,12 +376,10 @@ button { cursor: pointer; }
     <div class="quota-card">
       <div class="quota-head"><span>存储空间</span><span id="quota-text">-- / 10 GB</span></div>
       <div class="quota-bar"><div id="quota-fill" class="quota-fill"></div></div>
-      <p id="quota-tip" class="quota-tip">七牛云标准存储每月免费 10GB</p>
+      <p id="quota-tip" class="quota-tip">每月免费额度 10GB</p>
     </div>
 
     <div class="side-foot">
-      <button id="btn-help" class="ghost-btn"><svg class="icon"><use href="#i-help"/></svg>绑定说明</button>
-      <span id="mode-badge" class="mode-badge"></span>
       <span class="copyright">© 2026 FFF</span>
     </div>
   </aside>
@@ -420,8 +407,8 @@ button { cursor: pointer; }
     <div id="content" class="content">
       <div id="empty" class="empty hidden">
         <svg class="icon"><use href="#i-cloud"/></svg>
-        <h3>这里还空空的</h3>
-        <p>把文件拖进来，或点击上方「上传文件」</p>
+        <h3>暂无文件</h3>
+        <p>当前文件夹是空的</p>
       </div>
       <div id="filegrid" class="file-grid"></div>
     </div>
@@ -582,17 +569,12 @@ async function boot() {
   try {
     state.cfg = await api('/api/config');
   } catch (err) {
-    toast('连不上服务端：' + err.message, 'err');
+    toast('暂时无法连接服务，请稍后重试', 'err');
     return;
   }
-  const demo = state.cfg.mode === 'demo';
   if (state.cfg.configured === false) {
-    setTimeout(() => toast('服务端还缺少环境变量：' + (state.cfg.missing || []).join('、'), 'err'), 400);
+    setTimeout(() => toast('服务暂未就绪，请联系管理员', 'err'), 400);
   }
-  $('#brand-sub').textContent = demo ? '演示模式 · 10GB' : `${state.cfg.bucket || '未配置'} · 10GB`;
-  const badge = $('#mode-badge');
-  badge.textContent = demo ? '● 演示模式 · 文件存本机' : '● 七牛云已连接';
-  badge.classList.toggle('demo', demo);
   $('#btn-logout').classList.toggle('hidden', !state.cfg.authRequired);
   if (state.cfg.authRequired && !state.cfg.authenticated) {
     showLogin();
@@ -645,10 +627,8 @@ function updateQuota(bytes, quota) {
   $('#quota-text').textContent = `${formatSize(bytes)} / ${formatSize(quota)}`;
   $('#quota-fill').style.width = pct + '%';
   $('#quota-tip').textContent = pct > 90
-    ? '快超出免费额度了，注意清理文件'
-    : state.cfg.mode === 'demo'
-      ? '当前为演示模式，文件存在本机 data/ 目录'
-      : '七牛云标准存储每月免费 10GB';
+    ? '存储空间即将用满，请及时清理'
+    : '每月免费额度 10GB';
 }
 
 function renderCrumbs() {
@@ -948,32 +928,6 @@ function openPrompt(title, label, value, onOk) {
   openModal(title, box, '保存', () => onOk(input.value.trim()));
 }
 
-function openHelp() {
-  const box = el('div');
-  const demo = state.cfg.mode === 'demo';
-  const status = demo
-    ? '演示模式 · 文件保存在本机 data/ 目录'
-    : state.cfg.configured === false
-      ? '已部署，但服务端密钥未配置（缺少 ' + escapeHtml((state.cfg.missing || []).join('、')) + '）'
-      : '已连接七牛云空间 ' + escapeHtml(state.cfg.bucket);
-  box.innerHTML = `
-    <p><strong>当前状态：${status}</strong></p>
-    <p>这个页面本身是<strong>纯静态单文件</strong>，密钥从不出现在网页里。签发上传凭证、列举和删除文件由服务端完成：</p>
-    <ol>
-      <li><strong>EdgeOne Pages（线上版）</strong>：密钥放在控制台「环境变量」里，由仓库 <code>functions/api/[[default]].js</code> 边缘函数处理 <code>/api/*</code>；推到 GitHub 即自动构建发布。</li>
-      <li><strong>本地 / 自托管</strong>：复制 <code>config.example.json</code> 为 <code>config.json</code> 填好，运行 <code>node server.js</code>。</li>
-    </ol>
-    <p>需要准备：七牛云实名认证、一个<strong>私有</strong>空间（建议华东 z0）、AccessKey / SecretKey、空间绑定域名，以及访问密码。</p>
-    <p>浏览器拿到的只是 1 小时有效的上传凭证和私有下载签名链接，AK/SK 始终留在服务端。</p>
-    <p>免费额度（每月发放、不结转）：标准存储 <strong>10GB</strong>、CDN 回源流出 <strong>10GB</strong>、PUT/DELETE <strong>10 万次</strong>、GET <strong>100 万次</strong>，上传流量不计费；超出按量计费，建议开启余额告警。</p>
-  `;
-  openModal('部署与配置说明', box, '知道了', null);
-}
-
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
 $('#modal-ok').addEventListener('click', async () => {
   const handler = modalHandler;
   const input = $('#modal-body input');
@@ -1034,7 +988,6 @@ $('#btn-theme').addEventListener('click', () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 $('#btn-view').addEventListener('click', () => applyView(state.view === 'grid' ? 'list' : 'grid'));
 $('#btn-refresh').addEventListener('click', refresh);
-$('#btn-help').addEventListener('click', openHelp);
 $('#btn-logout').addEventListener('click', async () => {
   await postJson('/api/logout', {});
   showLogin();
