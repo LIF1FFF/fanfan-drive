@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理后台 · 反反的网盘</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b8cff'/%3E%3Cpath d='M9 20h14a4 4 0 0 0 .4-8A6 6 0 0 0 12 11a4.5 4.5 0 0 0-3 9z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #0d1117; --panel: #161d29; --panel-2: #1c2533; --hover: #222d3d;
+  --border: #26303f; --text: #e7edf5; --text-2: #a5b1c2; --muted: #77869b;
+  --accent: #5b8cff; --accent-2: #8a6cff; --accent-soft: rgba(91,140,255,.14);
+  --ok: #3ecf8e; --ok-soft: rgba(62,207,142,.12); --danger: #ff6b75;
+  --shadow: 0 16px 40px rgba(0,0,0,.4);
+}
+[data-theme="light"] {
+  --bg: #f5f7fb; --panel: #fff; --panel-2: #f7f9fc; --hover: #eef3fb;
+  --border: #e2e8f1; --text: #1c2432; --text-2: #4b5a70; --muted: #8592a5;
+  --accent: #3568e8; --accent-2: #7554e8; --accent-soft: rgba(53,104,232,.1);
+  --ok: #1a9d63; --ok-soft: rgba(26,157,99,.1); --danger: #e04a55;
+  --shadow: 0 16px 40px rgba(31,45,72,.14);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: var(--bg); color: var(--text);
+  font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  transition: background .2s ease;
+}
+.wrap { width: 100%; max-width: 430px; }
+.card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; box-shadow: var(--shadow);
+}
+.head { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+.logo {
+  width: 46px; height: 46px; flex: none; border-radius: 13px; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
+}
+.logo svg { width: 26px; height: 26px; fill: currentColor; }
+.head h1 { margin: 0; font-size: 19px; font-weight: 650; letter-spacing: .2px; }
+.head p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.theme-btn {
+  margin-left: auto; flex: none; border: 1px solid var(--border); background: transparent;
+  color: var(--text-2); border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+}
+.theme-btn:hover { background: var(--hover); color: var(--text); }
+.hint { margin: 0 0 18px; color: var(--text-2); font-size: 13px; }
+input {
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--panel-2); color: var(--text); font-size: 14px; outline: none;
+}
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--panel-2); color: var(--text); font-size: 13px; font-weight: 550;
+  text-decoration: none; cursor: pointer; transition: filter .15s ease, background .15s ease;
+}
+.btn:hover { background: var(--hover); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn.primary {
+  border-color: transparent; color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.btn.primary:hover { filter: brightness(1.08); }
+.block { display: flex; width: 100%; margin-top: 12px; }
+.err { min-height: 20px; margin: 10px 0 0; color: var(--danger); font-size: 12px; }
+.back { display: inline-block; margin-top: 6px; color: var(--muted); font-size: 12px; text-decoration: none; }
+.back:hover { color: var(--accent); }
+.status {
+  display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 10px;
+  background: var(--ok-soft); color: var(--ok); font-size: 13px; font-weight: 600; margin-bottom: 18px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.stats > div {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 8px; text-align: center;
+}
+.stats span { display: block; font-size: 18px; font-weight: 650; }
+.stats small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions .btn:last-child { grid-column: 1 / -1; }
+.tip { margin: 18px 0 0; color: var(--muted); font-size: 12px; }
+.foot { margin: 18px 0 0; text-align: center; color: var(--muted); font-size: 11px; }
+.hidden { display: none !important; }
+@media (max-width: 420px) { .card { padding: 22px; } .stats span { font-size: 16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="head">
+      <div class="logo"><svg viewBox="0 0 24 24"><path d="M6.5 19a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.6 9.6 4.6 4.6 0 0 1 17.5 19z"/></svg></div>
+      <div><h1>反反的网盘</h1><p>管理后台</p></div>
+      <button id="theme" class="theme-btn" type="button">切换主题</button>
+    </div>
+
+    <section id="locked">
+      <p class="hint">输入管理密码，解锁上传、删除、重命名等管理操作。</p>
+      <form id="form">
+        <input id="pwd" type="password" placeholder="管理密码" autocomplete="current-password" required>
+        <button class="btn primary block" type="submit">解锁管理权限</button>
+      </form>
+      <p id="err" class="err"></p>
+      <a class="back" href="/">← 返回网盘</a>
+    </section>
+
+    <section id="unlocked" class="hidden">
+      <div class="status"><span class="dot"></span>管理权限已生效</div>
+      <div class="stats">
+        <div><span id="s-usage">--</span><small>已用空间</small></div>
+        <div><span id="s-files">--</span><small>根目录文件</small></div>
+        <div><span id="s-folders">--</span><small>根目录文件夹</small></div>
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="/">进入网盘</a>
+        <a class="btn" href="/?upload=1">上传文件</a>
+        <button id="logout" class="btn" type="button">退出管理</button>
+      </div>
+      <p class="tip">登录状态保存在本浏览器，网盘页面会显示管理操作；退出后仅可浏览与下载。</p>
+    </section>
+  </div>
+  <p class="foot">© 2026 FFF</p>
+</div>
+
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s);
+const fmt = (n) => {
+  if (!n) return '0 B';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0, v = n;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (i ? v.toFixed(v >= 10 ? 1 : 2) : v) + ' ' + u[i];
+};
+
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('pan-theme', t);
+}
+applyTheme(localStorage.getItem('pan-theme') || 'dark');
+$('#theme').addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || '请求失败');
+  return j;
+}
+
+function render(admin) {
+  $('#locked').classList.toggle('hidden', admin);
+  $('#unlocked').classList.toggle('hidden', !admin);
+  $('#err').textContent = '';
+  if (admin) loadStats();
+  else { $('#s-usage').textContent = '--'; $('#s-files').textContent = '--'; $('#s-folders').textContent = '--'; }
+}
+
+async function loadStats() {
+  try {
+    const [usage, list] = await Promise.all([api('/api/usage'), api('/api/list?prefix=')]);
+    $('#s-usage').textContent = fmt(usage.bytes);
+    $('#s-files').textContent = (list.items || []).length;
+    $('#s-folders').textContent = (list.folders || []).length;
+  } catch (err) { $('#err').textContent = err.message; }
+}
+
+$('#form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#form button');
+  btn.disabled = true;
+  $('#err').textContent = '';
+  try {
+    await api('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: $('#pwd').value }),
+    });
+    $('#pwd').value = '';
+    render(true);
+  } catch (err) {
+    $('#err').textContent = err.message;
+    $('#pwd').select();
+  } finally { btn.disabled = false; }
+});
+
+$('#logout').addEventListener('click', async () => {
+  try { await api('/api/admin/logout', { method: 'POST' }); render(false); }
+  catch (err) { $('#err').textContent = err.message; }
+});
+
+api('/api/config').then((cfg) => render(!!cfg.isAdmin)).catch((err) => { $('#err').textContent = err.message; });
+setTimeout(() => { if (!$('#unlocked').classList.contains('hidden')) return; $('#pwd').focus(); }, 100);
+</script>
+</body>
+</html>

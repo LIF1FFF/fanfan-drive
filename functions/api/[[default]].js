@@ -9,6 +9,9 @@
  * 密钥来自 Pages 环境变量（context.env），永远不会下发到浏览器：
  *   QINIU_AK / QINIU_SK / QINIU_BUCKET / QINIU_DOMAIN / PAN_PASSWORD
  *   QINIU_REGION(默认 z0) / QINIU_PRIVATE(默认 1) / MAX_UPLOAD_MB(默认 200)
+ *
+ * 权限分层：主页面公开只读；在 /admin 输入 PAN_PASSWORD 后获得管理会话。
+ *   list / usage / url 匿名可读；token / upload / delete / rename / mkdir 必须管理员会话。
  */
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -322,6 +325,7 @@ export async function onRequest({ request, env }) {
   const p = url.pathname.replace(/\/+$/, '') || '/';
   const q = (name) => url.searchParams.get(name) || '';
   const method = request.method.toUpperCase();
+  const isAdmin = checkSession(cfg, parseCookies(request.headers.get('cookie'))[COOKIE]);
 
   try {
     if (method === 'OPTIONS') return new Response(null, { status: 204 });
@@ -331,31 +335,38 @@ export async function onRequest({ request, env }) {
       return json({
         mode: 'qiniu',
         configured: cfg.configured,
-        authRequired: cfg.configured,
-        authenticated: checkSession(cfg, parseCookies(request.headers.get('cookie'))[COOKIE]),
+        isAdmin,
+        authRequired: false,
+        authenticated: isAdmin,
         maxUploadMB: cfg.maxMB,
         quotaBytes: QUOTA_BYTES,
       });
     }
 
-    if (p === '/api/login' && method === 'POST') {
+    // 后台管理登录：/api/admin/login 为正式入口，/api/login 保留作兼容别名
+    if ((p === '/api/admin/login' || p === '/api/login') && method === 'POST') {
       const { password } = await request.json();
       if (!cfg.configured) return json({ error: '服务暂未就绪，请联系管理员' }, 503);
       if (!safeEqual(String(password || ''), cfg.password)) return json({ error: '密码不对，再试一次' }, 401);
-      return json({ ok: true }, 200, {
+      return json({ ok: true, isAdmin: true }, 200, {
         'Set-Cookie': `${COOKIE}=${issueSession(cfg)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`,
       });
     }
 
-    if (p === '/api/logout' && method === 'POST') {
-      return json({ ok: true }, 200, { 'Set-Cookie': `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0` });
+    if ((p === '/api/admin/logout' || p === '/api/logout') && method === 'POST') {
+      return json({ ok: true, isAdmin: false }, 200, {
+        'Set-Cookie': `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
+      });
     }
 
     if (!cfg.configured) {
       return json({ error: '服务暂未就绪，请联系管理员' }, 503);
     }
-    if (!checkSession(cfg, parseCookies(request.headers.get('cookie'))[COOKIE])) {
-      return json({ error: '请先登录', needLogin: true }, 401);
+
+    // 访客可浏览、下载、预览；上传 / 删除 / 改名 / 建目录 / 取上传凭证必须管理员会话
+    const readOnly = method === 'GET' && (p === '/api/list' || p === '/api/usage' || p === '/api/url');
+    if (!readOnly && !isAdmin) {
+      return json({ error: '需要管理员权限', needAdmin: true }, 401);
     }
 
     if (p === '/api/list' && method === 'GET') {

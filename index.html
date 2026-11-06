@@ -88,35 +88,6 @@ button { cursor: pointer; }
 }
 .icon-btn:hover { background: var(--hover); color: var(--text); }
 
-/* ---------------- 登录 ---------------- */
-.login-layer {
-  position: fixed; inset: 0; z-index: 60;
-  display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(900px 500px at 50% -10%, rgba(91,140,255,.18), transparent 70%), var(--bg);
-}
-.login-card {
-  width: min(380px, calc(100vw - 40px)); padding: 38px 32px 30px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
-  box-shadow: var(--shadow); text-align: center;
-  animation: pop .3s ease;
-}
-.login-logo {
-  width: 58px; height: 58px; margin: 0 auto 16px;
-  display: grid; place-items: center; border-radius: 18px; color: #fff;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 10px 26px rgba(91,140,255,.3);
-}
-.login-logo .icon { width: 30px; height: 30px; }
-.login-card h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .5px; }
-.login-card p { margin: 0 0 24px; font-size: 13px; }
-.login-card input {
-  width: 100%; height: 42px; margin-bottom: 14px; padding: 0 14px;
-  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); outline: none;
-}
-.login-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.error-text { min-height: 18px; margin: 12px 0 0 !important; color: var(--danger); }
-
 /* ---------------- 布局 ---------------- */
 .app { display: grid; grid-template-columns: 232px 1fr; height: 100vh; }
 .sidebar {
@@ -149,6 +120,8 @@ button { cursor: pointer; }
 .quota-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .5s ease; }
 .quota-tip { margin: 0; font-size: 11px; color: var(--muted); }
 .side-foot { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.admin-link { font-size: 11px; color: var(--muted); text-decoration: none; opacity: .7; }
+.admin-link:hover { color: var(--accent); opacity: 1; }
 .copyright { font-size: 11px; color: var(--muted); }
 
 .main { display: flex; flex-direction: column; min-width: 0; }
@@ -342,21 +315,7 @@ button { cursor: pointer; }
   <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
 </svg>
 
-<!-- 登录 -->
-<div id="login" class="login-layer hidden">
-  <div class="login-card">
-    <div class="login-logo"><svg class="icon"><use href="#i-cloud"/></svg></div>
-    <h1>反反的网盘</h1>
-    <p class="muted">请输入访问密码以继续</p>
-    <form id="login-form">
-      <input id="login-password" type="password" placeholder="访问密码" autocomplete="current-password" required>
-      <button class="btn primary block" type="submit">进入网盘</button>
-    </form>
-    <p id="login-error" class="error-text"></p>
-  </div>
-</div>
-
-<!-- 主界面 -->
+<!-- 主界面（公开只读，写操作在后台解锁管理权限后显示） -->
 <div id="app" class="app hidden">
   <aside class="sidebar">
     <div class="brand">
@@ -380,6 +339,7 @@ button { cursor: pointer; }
     </div>
 
     <div class="side-foot">
+      <a id="admin-entry" class="admin-link" href="/admin/">管理</a>
       <span class="copyright">© 2026 FFF</span>
     </div>
   </aside>
@@ -392,15 +352,15 @@ button { cursor: pointer; }
         <button id="btn-theme" class="icon-btn" title="切换主题"><svg class="icon"><use href="#i-sun"/></svg></button>
         <button id="btn-view" class="icon-btn" title="切换视图"><svg class="icon"><use href="#i-list"/></svg></button>
         <button id="btn-refresh" class="icon-btn" title="刷新"><svg class="icon"><use href="#i-refresh"/></svg></button>
-        <button id="btn-logout" class="icon-btn hidden" title="退出登录"><svg class="icon"><use href="#i-logout"/></svg></button>
+        <button id="btn-logout" class="icon-btn hidden" title="退出管理"><svg class="icon"><use href="#i-logout"/></svg></button>
       </div>
     </header>
 
     <div class="toolbar">
-      <button id="btn-upload" class="btn primary"><svg class="icon"><use href="#i-upload"/></svg>上传文件</button>
-      <button id="btn-mkdir" class="btn"><svg class="icon"><use href="#i-folder"/></svg>新建文件夹</button>
-      <button id="btn-select" class="btn">多选</button>
-      <button id="btn-delete-selected" class="btn danger hidden">删除选中 (<span id="sel-count">0</span>)</button>
+      <button id="btn-upload" class="btn primary admin-only hidden"><svg class="icon"><use href="#i-upload"/></svg>上传文件</button>
+      <button id="btn-mkdir" class="btn admin-only hidden"><svg class="icon"><use href="#i-folder"/></svg>新建文件夹</button>
+      <button id="btn-select" class="btn admin-only hidden">多选</button>
+      <button id="btn-delete-selected" class="btn danger admin-only hidden">删除选中 (<span id="sel-count">0</span>)</button>
       <span id="count" class="count"></span>
     </div>
 
@@ -536,10 +496,6 @@ async function api(path, opts = {}) {
   const res = await fetch(path, { credentials: 'same-origin', ...opts });
   let data = {};
   try { data = await res.json(); } catch { /* 忽略非 JSON 响应 */ }
-  if (res.status === 401 && data.needLogin) {
-    showLogin();
-    throw new Error('请先登录');
-  }
   if (!res.ok) throw new Error(data.error || `请求失败 (${res.status})`);
   return data;
 }
@@ -554,14 +510,22 @@ function getFileUrl(key) {
   return state.urlCache.get(key);
 }
 
-// ---------------------------------------------------------------- 启动 / 登录
+// ---------------------------------------------------------------- 启动 / 权限
 
-function showLogin() {
-  $('#app').classList.add('hidden');
-  $('#login').classList.remove('hidden');
-  $('#login-password').value = '';
-  $('#login-error').textContent = '';
-  setTimeout(() => $('#login-password').focus(), 60);
+function isAdmin() {
+  return !!(state.cfg && state.cfg.isAdmin);
+}
+
+/** 访客只读；在 /admin 解锁管理权限后才显示写操作 */
+function applyAdminUI() {
+  const admin = isAdmin();
+  $$('.admin-only').forEach((node) => node.classList.toggle('hidden', !admin));
+  $('#btn-logout').classList.toggle('hidden', !admin);
+  if (!admin) {
+    state.selectMode = false;
+    state.selected.clear();
+  }
+  render();
 }
 
 async function boot() {
@@ -575,32 +539,16 @@ async function boot() {
   if (state.cfg.configured === false) {
     setTimeout(() => toast('服务暂未就绪，请联系管理员', 'err'), 400);
   }
-  $('#btn-logout').classList.toggle('hidden', !state.cfg.authRequired);
-  if (state.cfg.authRequired && !state.cfg.authenticated) {
-    showLogin();
-    return;
-  }
-  enterApp();
-}
-
-function enterApp() {
-  $('#login').classList.add('hidden');
   $('#app').classList.remove('hidden');
   applyView(state.view);
+  applyAdminUI();
   refresh();
-}
-
-$('#login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const password = $('#login-password').value;
-  try {
-    await postJson('/api/login', { password });
-    $('#login-error').textContent = '';
-    enterApp();
-  } catch (err) {
-    $('#login-error').textContent = err.message;
+  // 后台「上传文件」跳过来时自动打开文件选择
+  if (new URLSearchParams(location.search).get('upload') === '1' && isAdmin()) {
+    history.replaceState(null, '', location.pathname);
+    setTimeout(() => $('#file-input').click(), 300);
   }
-});
+}
 
 // ---------------------------------------------------------------- 数据加载
 
@@ -678,7 +626,7 @@ function render() {
   folders.forEach((f) => grid.appendChild(makeCard(f, true)));
   files.forEach((f) => grid.appendChild(makeCard(f, false)));
   state.images = files.filter((f) => isImage(f.name));
-  $('#btn-delete-selected').classList.toggle('hidden', !state.selectMode || state.selected.size === 0);
+  $('#btn-delete-selected').classList.toggle('hidden', !isAdmin() || !state.selectMode || state.selected.size === 0);
   $('#sel-count').textContent = state.selected.size;
   $('#btn-select').textContent = state.selectMode ? '取消多选' : '多选';
 }
@@ -715,9 +663,11 @@ function makeCard(item, folder) {
   if (!folder) {
     ops.appendChild(opBtn('i-download', '下载', '', () => downloadFile(item.key, item.name)));
     ops.appendChild(opBtn('i-link', '复制链接', '', () => copyLink(item.key)));
-    ops.appendChild(opBtn('i-edit', '重命名', '', () => renameItem(item)));
   }
-  ops.appendChild(opBtn('i-trash', '删除', 'del', () => confirmDelete([{ key: item.key, folder }])));
+  if (isAdmin()) {
+    if (!folder) ops.appendChild(opBtn('i-edit', '重命名', '', () => renameItem(item)));
+    ops.appendChild(opBtn('i-trash', '删除', 'del', () => confirmDelete([{ key: item.key, folder }])));
+  }
   card.appendChild(ops);
 
   card.addEventListener('click', (e) => {
@@ -762,7 +712,7 @@ async function copyLink(key) {
     const { url } = await getFileUrl(key);
     const full = url.startsWith('http') ? url : location.origin + url;
     await navigator.clipboard.writeText(full);
-    toast('链接已复制（私有空间链接 1 小时后失效）', 'ok');
+    toast('链接已复制（1 小时后失效）', 'ok');
   } catch (err) { toast('复制失败：' + err.message, 'err'); }
 }
 
@@ -860,6 +810,7 @@ function xhrForm(url, token, key, file, task) {
 }
 
 async function uploadFiles(fileList) {
+  if (!isAdmin()) { toast('没有管理权限', 'err'); return; }
   const files = Array.from(fileList || []);
   if (!files.length) return;
   const limit = state.cfg.maxUploadMB * 1024 * 1024;
@@ -989,8 +940,8 @@ $('#btn-theme').addEventListener('click', () =>
 $('#btn-view').addEventListener('click', () => applyView(state.view === 'grid' ? 'list' : 'grid'));
 $('#btn-refresh').addEventListener('click', refresh);
 $('#btn-logout').addEventListener('click', async () => {
-  await postJson('/api/logout', {});
-  showLogin();
+  try { await postJson('/api/admin/logout', {}); } catch { /* 忽略 */ }
+  location.reload();
 });
 
 $$('#nav .nav-item').forEach((btn) => btn.addEventListener('click', () => {
@@ -1053,6 +1004,7 @@ document.addEventListener('keydown', (e) => {
 // 拖放上传
 let dragDepth = 0;
 window.addEventListener('dragenter', (e) => {
+  if (!isAdmin()) return;
   if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
   dragDepth++;
   $('#drop-mask').classList.remove('hidden');
@@ -1066,7 +1018,7 @@ window.addEventListener('drop', (e) => {
   e.preventDefault();
   dragDepth = 0;
   $('#drop-mask').classList.add('hidden');
-  if (e.dataTransfer && e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+  if (isAdmin() && e.dataTransfer && e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
 });
 
 boot();
