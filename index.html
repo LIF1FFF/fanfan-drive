@@ -118,10 +118,6 @@ button { cursor: pointer; }
 .quota-bar { height: 6px; margin: 10px 0 8px; border-radius: 99px; background: var(--bg-soft); overflow: hidden; }
 .quota-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .5s ease; }
 .quota-tip { margin: 0; font-size: 11px; color: var(--muted); }
-.side-foot { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.admin-link { font-size: 11px; color: var(--muted); text-decoration: none; opacity: .7; }
-.admin-link:hover { color: var(--accent); opacity: 1; }
-.copyright { font-size: 11px; color: var(--muted); }
 
 .main { display: flex; flex-direction: column; min-width: 0; }
 .topbar {
@@ -270,8 +266,6 @@ button { cursor: pointer; }
   .nav { flex-direction: row; flex-wrap: wrap; order: 3; width: 100%; }
   .nav-item { height: 32px; padding: 0 9px; }
   .quota-card { margin: 0; width: 100%; order: 4; }
-  .side-foot { flex-direction: row; align-items: center; }
-  .copyright { display: none; }
   .topbar { height: auto; flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
   .search input { width: 120px; }
   .toolbar { padding: 10px 14px 4px; flex-wrap: wrap; }
@@ -337,10 +331,6 @@ button { cursor: pointer; }
       <p id="quota-tip" class="quota-tip">每月免费额度 10GB</p>
     </div>
 
-    <div class="side-foot">
-      <a id="admin-entry" class="admin-link" href="/admin/">管理</a>
-      <span class="copyright">© 2026 FFF</span>
-    </div>
   </aside>
 
   <main class="main">
