@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的网盘</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg-soft: #111823;
+  --panel: #161d29;
+  --panel-2: #1c2533;
+  --hover: #222d3d;
+  --border: #26303f;
+  --border-soft: #1f2836;
+  --text: #e7edf5;
+  --text-2: #a5b1c2;
+  --muted: #77869b;
+  --accent: #5b8cff;
+  --accent-2: #8a6cff;
+  --accent-soft: rgba(91, 140, 255, .14);
+  --danger: #ff6b75;
+  --danger-soft: rgba(255, 107, 117, .12);
+  --ok: #3ecf8e;
+  --shadow: 0 16px 40px rgba(0, 0, 0, .4);
+  --radius: 14px;
+}
+
+[data-theme="light"] {
+  --bg: #f5f7fb;
+  --bg-soft: #eef2f8;
+  --panel: #ffffff;
+  --panel-2: #f7f9fc;
+  --hover: #eef3fb;
+  --border: #e2e8f1;
+  --border-soft: #edf1f7;
+  --text: #1c2432;
+  --text-2: #4b5a70;
+  --muted: #8592a5;
+  --accent: #3568e8;
+  --accent-2: #7554e8;
+  --accent-soft: rgba(53, 104, 232, .1);
+  --danger: #e04a55;
+  --danger-soft: rgba(224, 74, 85, .09);
+  --ok: #1a9d63;
+  --shadow: 0 16px 40px rgba(31, 45, 72, .14);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button, input { font: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------------- 通用按钮 ---------------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--panel); color: var(--text-2);
+  font-size: 13px; font-weight: 500;
+  transition: .18s ease;
+}
+.btn:hover { background: var(--hover); color: var(--text); transform: translateY(-1px); }
+.btn.primary {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  border-color: transparent; color: #fff;
+  box-shadow: 0 6px 18px rgba(91, 140, 255, .25);
+}
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--danger); border-color: rgba(255,107,117,.3); background: var(--danger-soft); }
+.btn.danger:hover { background: var(--danger); color: #fff; }
+.btn.block { width: 100%; justify-content: center; height: 42px; }
+.icon-btn {
+  width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 9px;
+  background: transparent; color: var(--text-2); transition: .18s;
+}
+.icon-btn:hover { background: var(--hover); color: var(--text); }
+
+/* ---------------- 登录 ---------------- */
+.login-layer {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(900px 500px at 50% -10%, rgba(91,140,255,.18), transparent 70%), var(--bg);
+}
+.login-card {
+  width: min(380px, calc(100vw - 40px)); padding: 38px 32px 30px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
+  box-shadow: var(--shadow); text-align: center;
+  animation: pop .3s ease;
+}
+.login-logo {
+  width: 58px; height: 58px; margin: 0 auto 16px;
+  display: grid; place-items: center; border-radius: 18px; color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 10px 26px rgba(91,140,255,.3);
+}
+.login-logo .icon { width: 30px; height: 30px; }
+.login-card h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .5px; }
+.login-card p { margin: 0 0 24px; font-size: 13px; }
+.login-card input {
+  width: 100%; height: 42px; margin-bottom: 14px; padding: 0 14px;
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); outline: none;
+}
+.login-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.error-text { min-height: 18px; margin: 12px 0 0 !important; color: var(--danger); }
+
+/* ---------------- 布局 ---------------- */
+.app { display: grid; grid-template-columns: 232px 1fr; height: 100vh; }
+.sidebar {
+  display: flex; flex-direction: column; gap: 18px;
+  padding: 22px 16px; background: var(--bg-soft); border-right: 1px solid var(--border-soft);
+}
+.brand { display: flex; align-items: center; gap: 11px; padding: 0 6px; }
+.brand-icon {
+  width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.brand-icon .icon { width: 22px; height: 22px; }
+.brand strong { display: block; font-size: 15px; letter-spacing: .5px; }
+.brand span { display: block; font-size: 11px; color: var(--muted); }
+.nav { display: flex; flex-direction: column; gap: 3px; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 12px;
+  border: 0; border-radius: 10px; background: transparent; color: var(--text-2);
+  font-size: 13px; text-align: left; transition: .18s;
+}
+.nav-item:hover { background: var(--hover); color: var(--text); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.quota-card {
+  margin-top: auto; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--panel);
+}
+.quota-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-2); }
+.quota-head span:last-child { color: var(--text); font-weight: 600; }
+.quota-bar { height: 6px; margin: 10px 0 8px; border-radius: 99px; background: var(--bg-soft); overflow: hidden; }
+.quota-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .5s ease; }
+.quota-tip { margin: 0; font-size: 11px; color: var(--muted); }
+.side-foot { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.ghost-btn {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-2); font-size: 12px;
+}
+.ghost-btn:hover { background: var(--hover); color: var(--text); }
+.mode-badge {
+  padding: 4px 9px; border-radius: 99px; font-size: 11px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.mode-badge.demo { background: rgba(255, 176, 60, .13); color: #e9a33c; }
+.copyright { font-size: 11px; color: var(--muted); }
+
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  height: 66px; flex: none; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 0 24px; border-bottom: 1px solid var(--border-soft); background: var(--bg);
+}
+.crumbs { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.crumb {
+  padding: 5px 9px; border: 0; border-radius: 8px; background: transparent;
+  color: var(--text-2); font-size: 13px; max-width: 190px; overflow: hidden; text-overflow: ellipsis;
+}
+.crumb:hover { background: var(--hover); color: var(--text); }
+.crumb.current { color: var(--text); font-weight: 600; }
+.crumb-sep { color: var(--muted); font-size: 12px; }
+.top-actions { display: flex; align-items: center; gap: 6px; }
+.search {
+  display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 11px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--muted);
+}
+.search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.search input { width: 168px; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 13px; }
+.search input::placeholder { color: var(--muted); }
+.toolbar { display: flex; align-items: center; gap: 10px; padding: 14px 24px 4px; flex: none; }
+.count { margin-left: auto; font-size: 12px; color: var(--muted); }
+.content { flex: 1; overflow: auto; padding: 14px 24px 40px; }
+
+/* ---------------- 文件区 ---------------- */
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 14px; }
+.file-grid.list-view { display: flex; flex-direction: column; gap: 6px; }
+.file-card {
+  position: relative; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--panel); overflow: hidden; cursor: pointer;
+  transition: transform .18s, border-color .18s, box-shadow .18s;
+  animation: pop .22s ease both;
+}
+.file-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: var(--shadow); }
+.file-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.thumb {
+  height: 108px; display: grid; place-items: center; position: relative;
+  background: linear-gradient(160deg, var(--panel-2), var(--bg-soft)); color: var(--accent);
+}
+.thumb .icon { width: 38px; height: 38px; opacity: .85; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.is-folder { color: #f0b34e; }
+.file-meta { padding: 10px 11px 11px; }
+.file-name { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-sub { margin-top: 3px; font-size: 11px; color: var(--muted); }
+.file-ops {
+  position: absolute; top: 7px; right: 7px; display: flex; gap: 3px;
+  opacity: 0; transform: translateY(-4px); transition: .18s;
+}
+.file-card:hover .file-ops, .file-card.selected .file-ops { opacity: 1; transform: none; }
+.op-btn {
+  width: 27px; height: 27px; display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); color: var(--text-2);
+}
+.op-btn .icon { width: 14px; height: 14px; }
+.op-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.op-btn.del:hover { background: var(--danger); border-color: var(--danger); }
+.checkbox {
+  position: absolute; top: 8px; left: 8px; width: 18px; height: 18px;
+  border: 1.5px solid rgba(255,255,255,.75); border-radius: 5px;
+  background: rgba(10, 16, 26, .5); z-index: 2;
+}
+[data-theme="light"] .checkbox { border-color: var(--muted); background: rgba(255,255,255,.85); }
+.checkbox.on { background: var(--accent); border-color: var(--accent); }
+.checkbox.on::after { content: ''; display: block; width: 5px; height: 9px; margin: 2px 0 0 5px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+.list-view .file-card { display: flex; align-items: center; height: 58px; border-radius: 10px; }
+.list-view .thumb { width: 58px; height: 58px; flex: none; border-right: 1px solid var(--border-soft); }
+.list-view .thumb .icon { width: 24px; height: 24px; }
+.list-view .file-meta { flex: 1; min-width: 0; display: flex; align-items: center; gap: 16px; padding: 0 14px; }
+.list-view .file-name { flex: 1; }
+.list-view .file-sub { margin: 0; width: 150px; text-align: right; }
+.list-view .file-ops { position: static; opacity: 1; transform: none; margin-right: 12px; }
+.list-view .checkbox { position: static; margin-left: 10px; flex: none; border-color: var(--border); background: var(--panel-2); }
+
+.empty { padding: 90px 20px; text-align: center; color: var(--muted); }
+.empty .icon { width: 54px; height: 54px; color: var(--accent); opacity: .6; }
+.empty h3 { margin: 14px 0 6px; color: var(--text-2); font-size: 16px; }
+.empty p { margin: 0; font-size: 13px; }
+
+/* ---------------- 拖放 / 上传面板 ---------------- */
+.drop-mask {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center;
+  background: rgba(8, 13, 22, .74); backdrop-filter: blur(4px);
+}
+.drop-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: min(460px, 84vw); padding: 46px; border: 2px dashed var(--accent); border-radius: 20px;
+  background: var(--panel); color: var(--text);
+}
+.drop-inner .icon { width: 40px; height: 40px; color: var(--accent); }
+.drop-inner span { color: var(--muted); font-size: 12px; }
+.upload-panel {
+  position: fixed; right: 22px; bottom: 22px; z-index: 35;
+  width: min(340px, calc(100vw - 44px)); border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow);
+  animation: pop .25s ease; overflow: hidden;
+}
+.up-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+.up-list { max-height: 250px; overflow: auto; padding: 6px 12px 12px; }
+.up-item { padding: 9px 0; }
+.up-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
+.up-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-status { flex: none; color: var(--muted); }
+.up-status.ok { color: var(--ok); }
+.up-status.fail { color: var(--danger); }
+.up-bar { height: 4px; margin-top: 7px; border-radius: 99px; background: var(--bg-soft); overflow: hidden; }
+.up-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .2s; }
+.up-fill.fail { background: var(--danger); }
+
+/* ---------------- 弹层 ---------------- */
+.modal { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; background: rgba(8,13,22,.66); padding: 20px; }
+.modal-card { width: min(430px, 100%); max-height: 82vh; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 18px; background: var(--panel); box-shadow: var(--shadow); animation: pop .22s ease; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--border-soft); }
+.modal-head h3 { margin: 0; font-size: 15px; }
+.modal-body { padding: 18px; overflow: auto; font-size: 13px; color: var(--text-2); line-height: 1.8; }
+.modal-body input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-soft); color: var(--text); outline: none; }
+.modal-body input:focus { border-color: var(--accent); }
+.modal-body ol { margin: 0; padding-left: 20px; }
+.modal-body li { margin-bottom: 7px; }
+.modal-body code { padding: 2px 6px; border-radius: 5px; background: var(--bg-soft); color: var(--accent); font-size: 12px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 9px; padding: 12px 18px; border-top: 1px solid var(--border-soft); }
+.lightbox { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(5, 8, 14, .92); }
+.lightbox img { max-width: 88vw; max-height: 84vh; object-fit: contain; border-radius: 8px; }
+.lb-btn { position: absolute; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; background: rgba(255,255,255,.08); color: #fff; }
+.lb-btn:hover { background: rgba(255,255,255,.2); }
+.lb-close { top: 22px; right: 24px; }
+.lb-prev { left: 22px; transform: rotate(180deg); }
+.lb-next { right: 22px; }
+.lb-name { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: #cbd5e3; font-size: 13px; }
+.toast-wrap { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 70; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.toast { padding: 9px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); box-shadow: var(--shadow); font-size: 13px; animation: pop .2s ease; }
+.toast.ok { border-color: rgba(62,207,142,.4); }
+.toast.err { border-color: rgba(255,107,117,.4); color: var(--danger); }
+
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 860px) {
+  body { overflow: auto; }
+  .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+  .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border-right: 0; border-bottom: 1px solid var(--border-soft); }
+  .brand { flex: 1; }
+  .nav { flex-direction: row; flex-wrap: wrap; order: 3; width: 100%; }
+  .nav-item { height: 32px; padding: 0 9px; }
+  .quota-card { margin: 0; width: 100%; order: 4; }
+  .side-foot { flex-direction: row; align-items: center; }
+  .copyright { display: none; }
+  .topbar { height: auto; flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
+  .search input { width: 120px; }
+  .toolbar { padding: 10px 14px 4px; flex-wrap: wrap; }
+  .content { padding: 12px 14px 40px; overflow: visible; }
+  .file-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .list-view .file-sub { display: none; }
+}
+
+</style>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b8cff'/%3E%3Cpath d='M9 20h14a4 4 0 0 0 .4-8A6 6 0 0 0 12 11a4.5 4.5 0 0 0-3 9z' fill='white'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M6.5 19a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.6 9.6 4.6 4.6 0 0 1 17.5 19z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="m17 10 4-2v8l-4-2z"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M9 12h6M9 16h6M14 3v5h5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12m0 0 4-4m-4 4-4-4"/><path d="M4 18v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m3 0-1 13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/><path d="M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/><path d="m14 6 4 4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l2-2A5 5 0 0 0 12.5 4.5l-1 1"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2A5 5 0 0 0 11.5 19.5l1-1"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M14 8l4 4-4 4m4-4H9"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2 6"/><path d="M20 4v7h-7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-7h6v7"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5M3 17l9 5 9-5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+</svg>
+
+<!-- 登录 -->
+<div id="login" class="login-layer hidden">
+  <div class="login-card">
+    <div class="login-logo"><svg class="icon"><use href="#i-cloud"/></svg></div>
+    <h1>我的网盘</h1>
+    <p class="muted">输入访问密码，进入你的私人空间</p>
+    <form id="login-form">
+      <input id="login-password" type="password" placeholder="访问密码" autocomplete="current-password" required>
+      <button class="btn primary block" type="submit">进入网盘</button>
+    </form>
+    <p id="login-error" class="error-text"></p>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"><svg class="icon"><use href="#i-cloud"/></svg></div>
+      <div><strong>我的网盘</strong><span id="brand-sub">七牛云 · 10GB</span></div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-cat="all"><svg class="icon"><use href="#i-layers"/></svg>全部文件</button>
+      <button class="nav-item" data-cat="image"><svg class="icon"><use href="#i-image"/></svg>图片</button>
+      <button class="nav-item" data-cat="doc"><svg class="icon"><use href="#i-doc"/></svg>文档</button>
+      <button class="nav-item" data-cat="video"><svg class="icon"><use href="#i-video"/></svg>视频</button>
+      <button class="nav-item" data-cat="music"><svg class="icon"><use href="#i-music"/></svg>音乐</button>
+      <button class="nav-item" data-cat="other"><svg class="icon"><use href="#i-file"/></svg>其他</button>
+    </nav>
+
+    <div class="quota-card">
+      <div class="quota-head"><span>存储空间</span><span id="quota-text">-- / 10 GB</span></div>
+      <div class="quota-bar"><div id="quota-fill" class="quota-fill"></div></div>
+      <p id="quota-tip" class="quota-tip">七牛云标准存储每月免费 10GB</p>
+    </div>
+
+    <div class="side-foot">
+      <button id="btn-help" class="ghost-btn"><svg class="icon"><use href="#i-help"/></svg>绑定说明</button>
+      <span id="mode-badge" class="mode-badge"></span>
+      <span class="copyright">© 2026 FFF</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div id="crumbs" class="crumbs"></div>
+      <div class="top-actions">
+        <label class="search"><svg class="icon"><use href="#i-search"/></svg><input id="search" type="search" placeholder="搜索当前目录"></label>
+        <button id="btn-theme" class="icon-btn" title="切换主题"><svg class="icon"><use href="#i-sun"/></svg></button>
+        <button id="btn-view" class="icon-btn" title="切换视图"><svg class="icon"><use href="#i-list"/></svg></button>
+        <button id="btn-refresh" class="icon-btn" title="刷新"><svg class="icon"><use href="#i-refresh"/></svg></button>
+        <button id="btn-logout" class="icon-btn hidden" title="退出登录"><svg class="icon"><use href="#i-logout"/></svg></button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <button id="btn-upload" class="btn primary"><svg class="icon"><use href="#i-upload"/></svg>上传文件</button>
+      <button id="btn-mkdir" class="btn"><svg class="icon"><use href="#i-folder"/></svg>新建文件夹</button>
+      <button id="btn-select" class="btn">多选</button>
+      <button id="btn-delete-selected" class="btn danger hidden">删除选中 (<span id="sel-count">0</span>)</button>
+      <span id="count" class="count"></span>
+    </div>
+
+    <div id="content" class="content">
+      <div id="empty" class="empty hidden">
+        <svg class="icon"><use href="#i-cloud"/></svg>
+        <h3>这里还空空的</h3>
+        <p>把文件拖进来，或点击上方「上传文件」</p>
+      </div>
+      <div id="filegrid" class="file-grid"></div>
+    </div>
+  </main>
+</div>
+
+<input id="file-input" type="file" multiple hidden>
+
+<div id="drop-mask" class="drop-mask hidden"><div class="drop-inner"><svg class="icon"><use href="#i-upload"/></svg><strong>松开即可上传</strong><span>文件会保存到当前文件夹</span></div></div>
+
+<div id="upload-panel" class="upload-panel hidden">
+  <div class="up-head"><strong>上传任务</strong><button id="up-close" class="icon-btn"><svg class="icon"><use href="#i-close"/></svg></button></div>
+  <div id="up-list" class="up-list"></div>
+</div>
+
+<div id="lightbox" class="lightbox hidden">
+  <button id="lb-close" class="lb-btn lb-close"><svg class="icon"><use href="#i-close"/></svg></button>
+  <button id="lb-prev" class="lb-btn lb-prev"><svg class="icon"><use href="#i-chevron"/></svg></button>
+  <img id="lb-img" alt="图片预览">
+  <button id="lb-next" class="lb-btn lb-next"><svg class="icon"><use href="#i-chevron"/></svg></button>
+  <span id="lb-name" class="lb-name"></span>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="modal-title">标题</h3><button id="modal-x" class="icon-btn"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-foot">
+      <button id="modal-cancel" class="btn">取消</button>
+      <button id="modal-ok" class="btn primary">确定</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast-wrap"></div>
+<script>
+'use strict';
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const enc = encodeURIComponent;
+const state = {
+  cfg: null,
+  prefix: '',
+  cat: 'all',
+  search: '',
+  view: localStorage.getItem('pan-view') || 'grid',
+  selectMode: false,
+  selected: new Set(),
+  files: [],
+  folders: [],
+  urlCache: new Map(),
+  images: [],
+  lbIndex: 0,
+};
+
+// ---------------------------------------------------------------- 工具
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+
+function icon(id) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'icon');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', '#' + id);
+  svg.appendChild(use);
+  return svg;
+}
+
+function formatSize(bytes) {
+  if (!bytes && bytes !== 0) return '-';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / 1048576).toFixed(1) + ' MB';
+  return (bytes / 1073741824).toFixed(2) + ' GB';
+}
+
+function formatTime(t) {
+  if (!t) return '-';
+  const d = new Date(t * 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+const EXT = {
+  image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'avif', 'heic', 'ico'],
+  video: ['mp4', 'mkv', 'avi', 'mov', 'webm', 'm4v', 'flv', 'wmv'],
+  music: ['mp3', 'wav', 'flac', 'aac', 'm4a', 'ogg', 'wma', 'ape'],
+  doc: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'csv', 'rtf', 'epub'],
+};
+
+function extOf(name) {
+  const i = name.lastIndexOf('.');
+  return i > 0 ? name.slice(i + 1).toLowerCase() : '';
+}
+
+function category(name) {
+  const ext = extOf(name);
+  for (const key of Object.keys(EXT)) if (EXT[key].includes(ext)) return key;
+  return 'other';
+}
+
+const isImage = (name) => EXT.image.includes(extOf(name));
+
+function iconFor(name) {
+  const c = category(name);
+  return c === 'image' ? 'i-image' : c === 'video' ? 'i-video' : c === 'music' ? 'i-music' : c === 'doc' ? 'i-doc' : 'i-file';
+}
+
+function toast(msg, type) {
+  const box = $('#toast');
+  const node = el('div', 'toast' + (type ? ' ' + type : ''), msg);
+  box.appendChild(node);
+  setTimeout(() => node.remove(), 3200);
+}
+
+// ---------------------------------------------------------------- 请求
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { credentials: 'same-origin', ...opts });
+  let data = {};
+  try { data = await res.json(); } catch { /* 忽略非 JSON 响应 */ }
+  if (res.status === 401 && data.needLogin) {
+    showLogin();
+    throw new Error('请先登录');
+  }
+  if (!res.ok) throw new Error(data.error || `请求失败 (${res.status})`);
+  return data;
+}
+
+const postJson = (path, obj) =>
+  api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
+
+function getFileUrl(key) {
+  if (!state.urlCache.has(key)) {
+    state.urlCache.set(key, api('/api/url?key=' + enc(key)));
+  }
+  return state.urlCache.get(key);
+}
+
+// ---------------------------------------------------------------- 启动 / 登录
+
+function showLogin() {
+  $('#app').classList.add('hidden');
+  $('#login').classList.remove('hidden');
+  $('#login-password').value = '';
+  $('#login-error').textContent = '';
+  setTimeout(() => $('#login-password').focus(), 60);
+}
+
+async function boot() {
+  applyTheme(localStorage.getItem('pan-theme') || 'dark');
+  try {
+    state.cfg = await api('/api/config');
+  } catch (err) {
+    toast('连不上服务端：' + err.message, 'err');
+    return;
+  }
+  const demo = state.cfg.mode === 'demo';
+  if (state.cfg.configured === false) {
+    setTimeout(() => toast('服务端还缺少环境变量：' + (state.cfg.missing || []).join('、'), 'err'), 400);
+  }
+  $('#brand-sub').textContent = demo ? '演示模式 · 10GB' : `${state.cfg.bucket || '未配置'} · 10GB`;
+  const badge = $('#mode-badge');
+  badge.textContent = demo ? '● 演示模式 · 文件存本机' : '● 七牛云已连接';
+  badge.classList.toggle('demo', demo);
+  $('#btn-logout').classList.toggle('hidden', !state.cfg.authRequired);
+  if (state.cfg.authRequired && !state.cfg.authenticated) {
+    showLogin();
+    return;
+  }
+  enterApp();
+}
+
+function enterApp() {
+  $('#login').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  applyView(state.view);
+  refresh();
+}
+
+$('#login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const password = $('#login-password').value;
+  try {
+    await postJson('/api/login', { password });
+    $('#login-error').textContent = '';
+    enterApp();
+  } catch (err) {
+    $('#login-error').textContent = err.message;
+  }
+});
+
+// ---------------------------------------------------------------- 数据加载
+
+async function refresh() {
+  try {
+    const [list, usage] = await Promise.all([
+      api('/api/list?prefix=' + enc(state.prefix)),
+      api('/api/usage'),
+    ]);
+    state.files = list.items || [];
+    state.folders = list.folders || [];
+    state.urlCache.clear();
+    state.selected.clear();
+    updateQuota(usage.bytes, usage.quotaBytes);
+    renderCrumbs();
+    render();
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+}
+
+function updateQuota(bytes, quota) {
+  const pct = Math.min(100, (bytes / quota) * 100);
+  $('#quota-text').textContent = `${formatSize(bytes)} / ${formatSize(quota)}`;
+  $('#quota-fill').style.width = pct + '%';
+  $('#quota-tip').textContent = pct > 90
+    ? '快超出免费额度了，注意清理文件'
+    : state.cfg.mode === 'demo'
+      ? '当前为演示模式，文件存在本机 data/ 目录'
+      : '七牛云标准存储每月免费 10GB';
+}
+
+function renderCrumbs() {
+  const box = $('#crumbs');
+  box.innerHTML = '';
+  const root = el('button', 'crumb' + (state.prefix ? '' : ' current'), '全部文件');
+  root.onclick = () => goTo('');
+  box.appendChild(root);
+  const parts = state.prefix.split('/').filter(Boolean);
+  let acc = '';
+  parts.forEach((part, i) => {
+    acc += part + '/';
+    const sep = el('span', 'crumb-sep', '/');
+    box.appendChild(sep);
+    const target = acc;
+    const btn = el('button', 'crumb' + (i === parts.length - 1 ? ' current' : ''), part);
+    btn.onclick = () => goTo(target);
+    box.appendChild(btn);
+  });
+}
+
+function goTo(prefix) {
+  state.prefix = prefix;
+  state.search = '';
+  $('#search').value = '';
+  refresh();
+}
+
+// ---------------------------------------------------------------- 渲染
+
+function render() {
+  const term = state.search.trim().toLowerCase();
+  const match = (name) => !term || name.toLowerCase().includes(term);
+  let folders = state.folders.filter((f) => match(f.name));
+  let files = state.files.filter((f) => match(f.name));
+  if (state.cat !== 'all') {
+    folders = [];
+    files = files.filter((f) => (state.cat === 'other'
+      ? category(f.name) === 'other'
+      : category(f.name) === state.cat));
+  }
+  const grid = $('#filegrid');
+  grid.innerHTML = '';
+  grid.classList.toggle('list-view', state.view === 'list');
+  $('#count').textContent = `${folders.length} 个文件夹 · ${files.length} 个文件`;
+  $('#empty').classList.toggle('hidden', folders.length + files.length > 0);
+  folders.forEach((f) => grid.appendChild(makeCard(f, true)));
+  files.forEach((f) => grid.appendChild(makeCard(f, false)));
+  state.images = files.filter((f) => isImage(f.name));
+  $('#btn-delete-selected').classList.toggle('hidden', !state.selectMode || state.selected.size === 0);
+  $('#sel-count').textContent = state.selected.size;
+  $('#btn-select').textContent = state.selectMode ? '取消多选' : '多选';
+}
+
+function makeCard(item, folder) {
+  const id = (folder ? 'folder:' : 'file:') + item.key;
+  const card = el('div', 'file-card' + (state.selected.has(id) ? ' selected' : ''));
+  card.dataset.id = id;
+  card.dataset.folder = folder ? '1' : '0';
+
+  const thumb = el('div', 'thumb' + (folder ? ' is-folder' : ''));
+  if (!folder && isImage(item.name)) {
+    const img = document.createElement('img');
+    img.alt = item.name;
+    img.loading = 'lazy';
+    thumb.appendChild(img);
+    getFileUrl(item.key).then((u) => { img.src = u.thumbnail; }).catch(() => img.remove());
+  } else {
+    thumb.appendChild(icon(folder ? 'i-folder' : iconFor(item.name)));
+  }
+  card.appendChild(thumb);
+
+  const meta = el('div', 'file-meta');
+  meta.appendChild(el('div', 'file-name', item.name));
+  meta.appendChild(el('div', 'file-sub', folder ? '文件夹' : `${formatSize(item.size)} · ${formatTime(item.time)}`));
+  card.appendChild(meta);
+
+  if (state.selectMode) {
+    const cb = el('span', 'checkbox' + (state.selected.has(id) ? ' on' : ''));
+    card.prepend(cb);
+  }
+
+  const ops = el('div', 'file-ops');
+  if (!folder) {
+    ops.appendChild(opBtn('i-download', '下载', '', () => downloadFile(item.key, item.name)));
+    ops.appendChild(opBtn('i-link', '复制链接', '', () => copyLink(item.key)));
+    ops.appendChild(opBtn('i-edit', '重命名', '', () => renameItem(item)));
+  }
+  ops.appendChild(opBtn('i-trash', '删除', 'del', () => confirmDelete([{ key: item.key, folder }])));
+  card.appendChild(ops);
+
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.op-btn') || e.target.closest('.checkbox')) return;
+    if (state.selectMode) {
+      if (state.selected.has(id)) state.selected.delete(id); else state.selected.add(id);
+      render();
+      return;
+    }
+    if (folder) goTo(item.key);
+    else if (isImage(item.name)) openLightbox(item.key);
+    else downloadFile(item.key, item.name);
+  });
+  return card;
+}
+
+function opBtn(iconId, title, extra, handler) {
+  const btn = el('button', 'op-btn ' + extra);
+  btn.title = title;
+  btn.appendChild(icon(iconId));
+  btn.addEventListener('click', (e) => { e.stopPropagation(); handler(); });
+  return btn;
+}
+
+// ---------------------------------------------------------------- 文件操作
+
+async function downloadFile(key, name) {
+  try {
+    const { url } = await getFileUrl(key);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (err) { toast(err.message, 'err'); }
+}
+
+async function copyLink(key) {
+  try {
+    const { url } = await getFileUrl(key);
+    const full = url.startsWith('http') ? url : location.origin + url;
+    await navigator.clipboard.writeText(full);
+    toast('链接已复制（私有空间链接 1 小时后失效）', 'ok');
+  } catch (err) { toast('复制失败：' + err.message, 'err'); }
+}
+
+function renameItem(item) {
+  openPrompt('重命名文件', '输入新的文件名', item.name, async (value) => {
+    if (!value || /[\\/]/.test(value) || value.startsWith('.')) throw new Error('文件名不合法');
+    await postJson('/api/rename', { key: item.key, newKey: state.prefix + value });
+    toast('已重命名', 'ok');
+    refresh();
+  });
+}
+
+function confirmDelete(items) {
+  const label = items.length === 1 ? `「${items[0].key.split('/').filter(Boolean).pop() || items[0].key}」` : `选中的 ${items.length} 项`;
+  openModal('确认删除', `确定要删除 ${label} 吗？文件夹内的文件也会一起删除，此操作不可恢复。`, '删除', async () => {
+    const folders = items.filter((i) => i.folder);
+    const files = items.filter((i) => !i.folder);
+    if (files.length) await postJson('/api/delete', { keys: files.map((i) => i.key), folder: false });
+    for (const f of folders) await postJson('/api/delete', { keys: [f.key], folder: true });
+    toast('删除完成', 'ok');
+    state.selectMode = false;
+    refresh();
+  });
+}
+
+// ---------------------------------------------------------------- 上传
+
+function uniqueName(name, used) {
+  if (!used.has(name)) { used.add(name); return name; }
+  const dot = name.lastIndexOf('.');
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : '';
+  let i = 1, candidate;
+  do { candidate = `${base} (${i++})${ext}`; } while (used.has(candidate));
+  used.add(candidate);
+  return candidate;
+}
+
+function addTask(name) {
+  const item = el('div', 'up-item');
+  const row = el('div', 'up-row');
+  row.appendChild(el('span', 'up-name', name));
+  const status = el('span', 'up-status', '等待中');
+  row.appendChild(status);
+  const bar = el('div', 'up-bar');
+  const fill = el('div', 'up-fill');
+  bar.appendChild(fill);
+  item.append(row, bar);
+  $('#up-list').prepend(item);
+  return {
+    progress(r) { fill.style.width = Math.min(100, r * 100) + '%'; status.textContent = Math.round(r * 100) + '%'; },
+    done() { fill.style.width = '100%'; status.textContent = '完成'; status.className = 'up-status ok'; },
+    fail(msg) { fill.classList.add('fail'); status.textContent = msg; status.className = 'up-status fail'; status.title = msg; },
+    reset() { fill.style.width = '0'; fill.classList.remove('fail'); status.className = 'up-status'; status.textContent = '重新上传'; },
+  };
+}
+
+function xhrRaw(url, file, task) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) task.progress(e.loaded / e.total); };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return resolve();
+      let msg = `上传失败 (${xhr.status})`;
+      try { const j = JSON.parse(xhr.responseText); if (j.error) msg = j.error; } catch { /* 忽略 */ }
+      reject(new Error(msg));
+    };
+    xhr.onerror = () => reject(new Error('网络中断，上传失败'));
+    xhr.send(file);
+  });
+}
+
+function xhrForm(url, token, key, file, task) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) task.progress(e.loaded / e.total); };
+    xhr.onload = () => {
+      let j = null;
+      try { j = JSON.parse(xhr.responseText); } catch { /* 忽略 */ }
+      if (xhr.status >= 200 && xhr.status < 300 && !(j && j.error)) return resolve();
+      const err = new Error((j && j.error) || `上传失败 (HTTP ${xhr.status})`);
+      err.network = xhr.status === 0;
+      reject(err);
+    };
+    xhr.onerror = () => { const e = new Error('直传失败'); e.network = true; reject(e); };
+    const fd = new FormData();
+    fd.append('token', token);
+    fd.append('key', key);
+    fd.append('file', file, file.name);
+    xhr.send(fd);
+  });
+}
+
+async function uploadFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  const limit = state.cfg.maxUploadMB * 1024 * 1024;
+  $('#upload-panel').classList.remove('hidden');
+  const used = new Set(state.files.map((f) => f.name));
+  for (const file of files) {
+    const name = uniqueName(file.name, used);
+    const key = state.prefix + name;
+    const task = addTask(name);
+    if (file.size > limit) {
+      task.fail(`超过 ${state.cfg.maxUploadMB}MB 限制`);
+      continue;
+    }
+    try {
+      const info = await postJson('/api/token', { key });
+      if (info.mode === 'demo') {
+        await xhrRaw(`/api/upload?key=${enc(key)}&type=${enc(file.type || '')}&name=${enc(name)}`, file, task);
+      } else {
+        try {
+          await xhrForm(info.uploadUrl, info.token, key, file, task);
+        } catch (err) {
+          if (!err.network) throw err;
+          task.reset();
+          await xhrRaw(`/api/upload?key=${enc(key)}&type=${enc(file.type || '')}&name=${enc(name)}`, file, task);
+        }
+      }
+      task.done();
+    } catch (err) {
+      task.fail(err.message);
+      toast(`${name} 上传失败：${err.message}`, 'err');
+    }
+  }
+  refresh();
+}
+
+// ---------------------------------------------------------------- 弹窗 / 灯箱
+
+let modalHandler = null;
+
+function openModal(title, body, okText, onOk) {
+  $('#modal-title').textContent = title;
+  const box = $('#modal-body');
+  box.innerHTML = '';
+  if (typeof body === 'string') box.textContent = body;
+  else box.appendChild(body);
+  $('#modal-ok').textContent = okText || '确定';
+  modalHandler = onOk;
+  $('#modal').classList.remove('hidden');
+  const input = box.querySelector('input');
+  if (input) { input.focus(); input.select(); }
+}
+
+function closeModal() {
+  $('#modal').classList.add('hidden');
+  modalHandler = null;
+}
+
+function openPrompt(title, label, value, onOk) {
+  const box = el('div');
+  box.appendChild(el('p', '', label));
+  const input = el('input');
+  input.type = 'text';
+  input.value = value;
+  input.placeholder = label;
+  box.appendChild(input);
+  openModal(title, box, '保存', () => onOk(input.value.trim()));
+}
+
+function openHelp() {
+  const box = el('div');
+  const demo = state.cfg.mode === 'demo';
+  const status = demo
+    ? '演示模式 · 文件保存在本机 data/ 目录'
+    : state.cfg.configured === false
+      ? '已部署，但服务端密钥未配置（缺少 ' + escapeHtml((state.cfg.missing || []).join('、')) + '）'
+      : '已连接七牛云空间 ' + escapeHtml(state.cfg.bucket);
+  box.innerHTML = `
+    <p><strong>当前状态：${status}</strong></p>
+    <p>这个页面本身是<strong>纯静态单文件</strong>，密钥从不出现在网页里。签发上传凭证、列举和删除文件由服务端完成：</p>
+    <ol>
+      <li><strong>EdgeOne Pages（线上版）</strong>：密钥放在控制台「环境变量」里，由仓库 <code>functions/api/[[default]].js</code> 边缘函数处理 <code>/api/*</code>；推到 GitHub 即自动构建发布。</li>
+      <li><strong>本地 / 自托管</strong>：复制 <code>config.example.json</code> 为 <code>config.json</code> 填好，运行 <code>node server.js</code>。</li>
+    </ol>
+    <p>需要准备：七牛云实名认证、一个<strong>私有</strong>空间（建议华东 z0）、AccessKey / SecretKey、空间绑定域名，以及访问密码。</p>
+    <p>浏览器拿到的只是 1 小时有效的上传凭证和私有下载签名链接，AK/SK 始终留在服务端。</p>
+    <p>免费额度（每月发放、不结转）：标准存储 <strong>10GB</strong>、CDN 回源流出 <strong>10GB</strong>、PUT/DELETE <strong>10 万次</strong>、GET <strong>100 万次</strong>，上传流量不计费；超出按量计费，建议开启余额告警。</p>
+  `;
+  openModal('部署与配置说明', box, '知道了', null);
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+$('#modal-ok').addEventListener('click', async () => {
+  const handler = modalHandler;
+  const input = $('#modal-body input');
+  const value = input ? input.value.trim() : '';
+  closeModal();
+  if (handler) {
+    try { await handler(value); } catch (err) { toast(err.message, 'err'); }
+  }
+});
+$('#modal-cancel').addEventListener('click', closeModal);
+$('#modal-x').addEventListener('click', closeModal);
+$('#modal').addEventListener('click', (e) => { if (e.target === $('#modal')) closeModal(); });
+
+async function openLightbox(key) {
+  const index = state.images.findIndex((f) => f.key === key);
+  if (index < 0) return;
+  state.lbIndex = index;
+  $('#lightbox').classList.remove('hidden');
+  showLightbox();
+}
+
+async function showLightbox() {
+  const item = state.images[state.lbIndex];
+  if (!item) return;
+  $('#lb-name').textContent = `${item.name}  (${state.lbIndex + 1}/${state.images.length})`;
+  try {
+    const { url } = await getFileUrl(item.key);
+    $('#lb-img').src = url;
+  } catch (err) { toast(err.message, 'err'); }
+}
+
+function moveLightbox(delta) {
+  const n = state.images.length;
+  if (!n) return;
+  state.lbIndex = (state.lbIndex + delta + n) % n;
+  showLightbox();
+}
+
+// ---------------------------------------------------------------- 交互绑定
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem('pan-theme', theme);
+  $('#btn-theme').innerHTML = '';
+  $('#btn-theme').appendChild(icon(theme === 'dark' ? 'i-sun' : 'i-moon'));
+}
+
+function applyView(view) {
+  state.view = view;
+  localStorage.setItem('pan-view', view);
+  $('#btn-view').innerHTML = '';
+  $('#btn-view').appendChild(icon(view === 'grid' ? 'i-list' : 'i-grid'));
+  $('#btn-view').title = view === 'grid' ? '切换列表视图' : '切换网格视图';
+  if (state.cfg) render();
+}
+
+$('#btn-theme').addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+$('#btn-view').addEventListener('click', () => applyView(state.view === 'grid' ? 'list' : 'grid'));
+$('#btn-refresh').addEventListener('click', refresh);
+$('#btn-help').addEventListener('click', openHelp);
+$('#btn-logout').addEventListener('click', async () => {
+  await postJson('/api/logout', {});
+  showLogin();
+});
+
+$$('#nav .nav-item').forEach((btn) => btn.addEventListener('click', () => {
+  $$('#nav .nav-item').forEach((b) => b.classList.toggle('active', b === btn));
+  state.cat = btn.dataset.cat;
+  render();
+}));
+
+$('#search').addEventListener('input', (e) => { state.search = e.target.value; render(); });
+
+$('#btn-upload').addEventListener('click', () => $('#file-input').click());
+$('#file-input').addEventListener('change', (e) => {
+  uploadFiles(e.target.files);
+  e.target.value = '';
+});
+
+$('#btn-mkdir').addEventListener('click', () => {
+  openPrompt('新建文件夹', '文件夹名称', '', async (name) => {
+    if (!name || /[\\/]/.test(name) || name.startsWith('.')) throw new Error('文件夹名称不合法');
+    await postJson('/api/mkdir?prefix=' + enc(state.prefix), { name });
+    toast('文件夹已创建', 'ok');
+    refresh();
+  });
+});
+
+$('#btn-select').addEventListener('click', () => {
+  state.selectMode = !state.selectMode;
+  state.selected.clear();
+  render();
+});
+
+$('#btn-delete-selected').addEventListener('click', () => {
+  const items = [...state.selected].map((id) => ({
+    key: id.slice(id.indexOf(':') + 1),
+    folder: id.startsWith('folder:'),
+  }));
+  if (items.length) confirmDelete(items);
+});
+
+$('#up-close').addEventListener('click', () => $('#upload-panel').classList.add('hidden'));
+$('#lb-close').addEventListener('click', () => $('#lightbox').classList.add('hidden'));
+$('#lb-prev').addEventListener('click', () => moveLightbox(-1));
+$('#lb-next').addEventListener('click', () => moveLightbox(1));
+$('#lightbox').addEventListener('click', (e) => { if (e.target === $('#lightbox')) $('#lightbox').classList.add('hidden'); });
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    $('#lightbox').classList.add('hidden');
+    closeModal();
+  }
+  if (!$('#lightbox').classList.contains('hidden')) {
+    if (e.key === 'ArrowLeft') moveLightbox(-1);
+    if (e.key === 'ArrowRight') moveLightbox(1);
+  }
+  if (e.key === 'Enter' && !$('#modal').classList.contains('hidden') && document.activeElement === $('#modal-body input')) {
+    $('#modal-ok').click();
+  }
+});
+
+// 拖放上传
+let dragDepth = 0;
+window.addEventListener('dragenter', (e) => {
+  if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+  dragDepth++;
+  $('#drop-mask').classList.remove('hidden');
+});
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('dragleave', () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (!dragDepth) $('#drop-mask').classList.add('hidden');
+});
+window.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  $('#drop-mask').classList.add('hidden');
+  if (e.dataTransfer && e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+});
+
+boot();
+
+</script>
+</body>
+</html>
