@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>反反的网盘</title>
 <style>
 :root {
@@ -258,20 +258,102 @@ button { cursor: pointer; }
 
 @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ---------------- 平板 / 手机 ---------------- */
 @media (max-width: 860px) {
-  body { overflow: auto; }
-  .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
-  .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border-right: 0; border-bottom: 1px solid var(--border-soft); }
-  .brand { flex: 1; }
-  .nav { flex-direction: row; flex-wrap: wrap; order: 3; width: 100%; }
-  .nav-item { height: 32px; padding: 0 9px; }
-  .quota-card { margin: 0; width: 100%; order: 4; }
-  .topbar { height: auto; flex-wrap: wrap; padding: 10px 14px; gap: 8px; }
-  .search input { width: 120px; }
-  .toolbar { padding: 10px 14px 4px; flex-wrap: wrap; }
-  .content { padding: 12px 14px 40px; overflow: visible; }
-  .file-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  html, body { height: auto; }
+  body { overflow: auto; -webkit-text-size-adjust: 100%; }
+  .app { display: flex; flex-direction: column; height: auto; min-height: 100vh; }
+
+  /* 侧栏压成：品牌一行 + 可横滑分类一行 + 容量细条一行 */
+  .sidebar {
+    gap: 8px;
+    padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
+    border-right: 0; border-bottom: 1px solid var(--border-soft);
+  }
+  .brand { flex: none; padding: 0; }
+  .brand-icon { width: 32px; height: 32px; border-radius: 10px; }
+  .brand-icon .icon { width: 19px; height: 19px; }
+  .brand strong { font-size: 14px; }
+  .nav {
+    order: 3; width: 100%; flex-direction: row; flex-wrap: nowrap; overflow-x: auto;
+    gap: 6px; padding-bottom: 2px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-item {
+    flex: none; height: 34px; padding: 0 12px; gap: 6px;
+    border-radius: 99px; background: var(--panel); font-size: 12px;
+  }
+  .nav-item .icon { width: 15px; height: 15px; }
+  .quota-card {
+    order: 4; margin: 0; width: 100%; padding: 9px 12px;
+    display: flex; align-items: center; gap: 10px; border-radius: 10px;
+  }
+  .quota-head { flex: none; font-size: 11px; }
+  .quota-head span:first-child { display: none; }
+  .quota-bar { flex: 1; margin: 0; }
+  .quota-tip { display: none; }
+
+  /* 顶栏：面包屑与图标同一行，搜索独占一行并吸顶 */
+  .topbar {
+    position: sticky; top: 0; z-index: 20; justify-content: flex-start;
+    height: auto; flex-wrap: wrap; gap: 8px;
+    padding: 8px max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
+  }
+  .crumbs { order: 1; flex: 1 1 auto; margin-right: auto; }
+  .crumb { max-width: 130px; padding: 4px 6px; }
+  .top-actions { display: contents; }
+  .top-actions > .icon-btn { order: 2; width: 36px; height: 36px; }
+  .top-actions > .search { order: 3; flex: 1 0 100%; width: 100%; height: 38px; }
+  .search input { flex: 1; width: auto; min-width: 0; font-size: 16px; }
+
+  .toolbar { gap: 8px; padding: 8px 14px 2px; flex-wrap: wrap; }
+  .toolbar .btn { height: 34px; padding: 0 11px; font-size: 12px; }
+  .content { padding: 10px 14px max(40px, env(safe-area-inset-bottom)); overflow: visible; }
+  .file-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .file-ops { opacity: 1; transform: none; }
+  .op-btn { width: 32px; height: 32px; }
+  .file-card:hover { transform: none; border-color: var(--border); box-shadow: none; }
+  .thumb { height: 92px; }
+  .file-meta { padding: 8px 9px 10px; }
+  .list-view .file-card { height: 56px; }
+  .list-view .thumb { width: 56px; height: 56px; }
+  .list-view .file-meta { padding: 0 10px; }
   .list-view .file-sub { display: none; }
+  .list-view .file-ops { margin-right: 6px; gap: 3px; }
+  .empty { padding: 60px 16px; }
+
+  .upload-panel {
+    left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom)); width: auto;
+  }
+  .drop-inner { padding: 28px; }
+  .lb-btn { width: 44px; height: 44px; }
+  .lb-name { bottom: max(20px, env(safe-area-inset-bottom)); }
+  .toast { max-width: calc(100vw - 32px); }
+  .modal { padding: 14px; }
+}
+
+/* 触屏设备没有 hover：操作按钮常显，并放大点击区域 */
+@media (hover: none) {
+  .file-ops { opacity: 1; transform: none; }
+  .op-btn { width: 32px; height: 32px; }
+  .file-card:hover { transform: none; border-color: var(--border); box-shadow: none; }
+  .btn:hover { transform: none; }
+  .icon-btn { width: 36px; height: 36px; }
+}
+
+/* 窄屏（iPhone SE 等）：缩小按钮组，避免四枚操作按钮挤出卡片 */
+@media (max-width: 380px) {
+  .file-grid { gap: 8px; }
+  .file-ops { top: 5px; right: 5px; gap: 2px; }
+  .op-btn { width: 28px; height: 28px; }
+  .op-btn .icon { width: 13px; height: 13px; }
+  .toolbar .btn { padding: 0 9px; }
 }
 
 </style>
